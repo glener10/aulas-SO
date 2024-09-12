@@ -8,7 +8,7 @@ class Processo {
   constructor() {
     this.pid = this.gerarPidAleatorio();
     this.estado = Estados.Novo;
-    this.tempoRestante = Math.floor(5 + Math.random() * 10); // Tempo de execução entre 5 e 15 segundos
+    this.tempoRestante = Math.floor(5 + Math.random() * 10);
   }
 
   private gerarPidAleatorio(): string {
@@ -17,15 +17,15 @@ class Processo {
 
   mostrar(): void {
     console.log(
-      `PID: ${this.pid}, Estado: ${this.estado}, Tempo Restante: ${this.tempoRestante}s`
+      `PID: ${this.pid}, Estado: ${this.estado}, Tempo Restante: ${this.tempoRestante}`
     );
   }
 }
 
 const NUMERO_DE_PROCESSOS = 5;
-const QUANTUM = 3;
-
 let processos = inicializarProcessos(NUMERO_DE_PROCESSOS);
+let EXISTE_PROCESSO_EXECUTANDO = false;
+const QUANTUM = 3;
 
 function inicializarProcessos(n: number): Processo[] {
   return Array.from({ length: n }, () => {
@@ -33,31 +33,56 @@ function inicializarProcessos(n: number): Processo[] {
   });
 }
 
-let iteracao = 0;
+let iteracoes = 0;
 while (!todosProcessosForamTerminados(processos)) {
-  processos.forEach((processo) => {
-    if (processo.estado !== Estados.Terminado) {
-      console.log(`\n-- Iteração ${iteracao} --`);
-      iteracao += 1;
+  iteracoes = iteracoes + 1;
+  console.log(`\n-- Iteração ${iteracoes} --`);
 
-      processo.estado = Estados.Executando;
+  processos.map((processo) => {
+    const alterarEstado = Math.random();
+    if (alterarEstado < 0.5) {
+      proximoEstado(processo);
+    }
+    if (processo.estado == Estados.Executando) {
+      console.log(
+        `PID: ${processo.pid}, Estado: ${processo.estado}, Tempo Restante: ${processo.tempoRestante}`
+      );
+      processo.tempoRestante = processo.tempoRestante - QUANTUM;
 
-      const tempoExecutado = Math.min(QUANTUM, processo.tempoRestante);
-      processo.tempoRestante -= tempoExecutado;
-
-      if (processo.tempoRestante > 0) {
-        processo.estado = Estados.Pronto;
-      } else {
+      if (processo.tempoRestante <= 0) {
+        processo.tempoRestante = 0;
         processo.estado = Estados.Terminado;
+      } else {
+        processo.estado = Estados.Pronto;
       }
-
+    } else {
       processo.mostrar();
     }
+
+    EXISTE_PROCESSO_EXECUTANDO = false;
   });
 }
 
+function proximoEstado(processo: Processo) {
+  if (processo.estado == Estados.Novo) {
+    processo.estado = Estados.Pronto;
+  } else if (processo.estado == Estados.Pronto) {
+    const probabilidadeExecutar = Math.random();
+    if (probabilidadeExecutar < 0.5) {
+      if (EXISTE_PROCESSO_EXECUTANDO == false) {
+        processo.estado = Estados.Executando;
+        EXISTE_PROCESSO_EXECUTANDO = true;
+      }
+    } else {
+      processo.estado = Estados.Bloqueado;
+    }
+  } else if (processo.estado == Estados.Bloqueado) {
+    processo.estado = Estados.Pronto;
+  }
+}
+
 console.log(
-  `\nTodos processos foram finalizados! Total de ${iteracao} iterações.`
+  `\nTodos processos foram finalizados! Total de ${iteracoes} iterações.`
 );
 
 function todosProcessosForamTerminados(processos: Processo[]): boolean {
