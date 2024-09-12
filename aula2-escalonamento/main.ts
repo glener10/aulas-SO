@@ -24,7 +24,6 @@ class Processo {
 
 const NUMERO_DE_PROCESSOS = 5;
 let processos = inicializarProcessos(NUMERO_DE_PROCESSOS);
-let EXISTE_PROCESSO_EXECUTANDO = false;
 const QUANTUM = 3;
 
 function inicializarProcessos(n: number): Processo[] {
@@ -38,11 +37,9 @@ while (!todosProcessosForamTerminados(processos)) {
   iteracoes = iteracoes + 1;
   console.log(`\n-- Iteração ${iteracoes} --`);
 
-  processos.map((processo) => {
-    const alterarEstado = Math.random();
-    if (alterarEstado < 0.5) {
-      proximoEstado(processo);
-    }
+  processos.forEach((processo) => {
+    alterarEstadoDoProcesso(processo);
+
     if (processo.estado == Estados.Executando) {
       console.log(
         `PID: ${processo.pid}, Estado: ${processo.estado}, Tempo Restante: ${processo.tempoRestante}`
@@ -58,9 +55,14 @@ while (!todosProcessosForamTerminados(processos)) {
     } else {
       processo.mostrar();
     }
-
-    EXISTE_PROCESSO_EXECUTANDO = false;
   });
+}
+
+function alterarEstadoDoProcesso(processo: Processo): void {
+  const alterarEstado = Math.random();
+  if (alterarEstado < 0.5) {
+    proximoEstado(processo);
+  }
 }
 
 function proximoEstado(processo: Processo) {
@@ -69,9 +71,8 @@ function proximoEstado(processo: Processo) {
   } else if (processo.estado == Estados.Pronto) {
     const probabilidadeExecutar = Math.random();
     if (probabilidadeExecutar < 0.5) {
-      if (EXISTE_PROCESSO_EXECUTANDO == false) {
+      if (!existeProcessoExecutando(processos)) {
         processo.estado = Estados.Executando;
-        EXISTE_PROCESSO_EXECUTANDO = true;
       }
     } else {
       processo.estado = Estados.Bloqueado;
@@ -79,6 +80,10 @@ function proximoEstado(processo: Processo) {
   } else if (processo.estado == Estados.Bloqueado) {
     processo.estado = Estados.Pronto;
   }
+}
+
+function existeProcessoExecutando(processos: Processo[]): boolean {
+  return processos.some((processo) => processo.estado === Estados.Executando);
 }
 
 console.log(
